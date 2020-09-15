@@ -1,4 +1,4 @@
-(declare-rel start ((Array Int Int) Int))
+(declare-rel start ((Array Int Int) Int)) 
 (declare-rel assert2 ((Array Int Int) Int))
 (declare-rel assign ((Array Int Int) Int))
 ;
