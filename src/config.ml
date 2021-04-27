@@ -24,6 +24,8 @@ type config_t = {
   debug:bool;
   version:string;
   acker:bool;
+  abstract_only:bool;
+  simplify:bool;
 }
 exception Version
 exception Usage of string
@@ -33,6 +35,8 @@ exception NotFound of string
 let set_outputsmt config (s:string) = config := {!config with outputsmt_name=s}
 let set_debug config () = config := {!config with debug=true}
 let set_acker config () = config := {!config with acker=true}
+let set_abs_only config () = config := {!config with abstract_only=true}
+let set_no_simplify config () = config := {!config with simplify=false}
 
 let set_fname config (s:string) =  
   if Sys.file_exists s
@@ -51,6 +55,8 @@ let make_default_config () = {
   debug=false;
   version="1.2 Sept 2016";
   acker=false;
+  abstract_only=false;
+  simplify=true;
 }
 			       
 let string_config cf =
@@ -60,6 +66,9 @@ let read_args () =
   let cf = ref (make_default_config()) in
   let speclist = 
     [
+      ("-absonly",Arg.Unit (set_abs_only cf) ,": only abstract");
+      ("-no_simplify",Arg.Unit (set_no_simplify cf) ,": do not simplify the result. This exposes internal theories.");
+      ("--version",Arg.Unit (fun () -> fprintf std_formatter "vaphor Version %s@." !cf.version ; raise(Version)),": print version and exit");
       ("-acker",Arg.Unit (set_acker cf) ,": ackermanise arrays when possible");
       ("--version",Arg.Unit (fun () -> fprintf std_formatter "vaphor Version %s@." !cf.version ; raise(Version)),": print version and exit");
       ("-debug", Arg.Unit (set_debug cf) ,": all debug info");

@@ -1,50 +1,58 @@
 
 %{
-(*This file is part of Vaphor
-
-    Vaphor is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Vaphor is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Vaphor.  If not, see <https://www.gnu.org/licenses/>. *)
-open Expressions
-
-type symbol = string
-type info = Info.info
-type tree = (info, (symbol * info)) Tree.tree
-(*Everything is an expression at this point. We will reinterpret types, foralls, asserts, ... later on*)
+open Expr
+open Horn
 %}
 
-%token LBRACE RBRACE EOF
-%token <string> WORD COMMENT
+%token LBRACE RBRACE CHECKSAT DECLAREFUN DECLAREREL ASSERT EOF SETLOGIC
+%token <string> WORD COMMENT BINDER
 
-%start horn
-%type <(Expressions.Info.info, (string * Expressions.Info.info)) Expressions.Tree.tree> horn
-%type <(Expressions.Info.info, (string * Expressions.Info.info)) Expressions.Tree.tree> commands
+%start horn expr
+%type <Horn.horn> horn
+%type <Expr.expr> expr
 %%
 
-expression_list:
-| {[]}
-| expression expression_list {$1::$2}
-
-expression:
-| WORD {Tree.Leaf($1, Info.none)}
-/*| WORD {Interpreted($1)}*/
-| LBRACE expression_list RBRACE {Tree.Node($2, Info.none)}
-
-commands:
-| EOF {Tree.Leaf("Skip", Info.none)}
-| COMMENT commands {$2} 
-| expression commands {Tree.Node([Tree.Leaf("SEQ", Info.none); $1; $2], Info.none)}
 
 horn:
-| commands {$1}
+| LBRACE ASSERT expr RBRACE horn                                      {let command = Clause($3) in (command::(fst $5), snd $5)}
+| COMMENT horn                                                        {let command = Comment($1) in (command::(fst $2), snd $2)}
+| LBRACE DECLAREREL WORD exprlist RBRACE horn                         {let predname = $3 in
+                                                                       let predtype = match $4 with
+                                                                         | [] -> failwith "Predicate declaration with empty type"
+                                                                         | [a] -> a
+                                                                         | l -> mk_tuple l in
+                                                                        (fst $6, (predname, predtype)::snd $6)}
+| LBRACE DECLAREFUN WORD exprlist expr RBRACE horn                    {let predname = $3 in
+                                                                       let predtype = match $4 with
+                                                                         | [] -> failwith "Predicate declaration with empty type"
+                                                                         | [a] -> a
+                                                                         | l -> mk_tuple l in
+                                                                       if $5 <> Cons("Bool", [], Hmap.empty) then 
+                                                                         failwith "Non boolean function declaration. The tool only handles predicates for the moment";
+                                                                        (fst $7, (predname, predtype)::snd $7)}
+| LBRACE CHECKSAT RBRACE                                              {([], [])}
+| LBRACE SETLOGIC WORD RBRACE horn                                    {$5}
+
+
+exprlist:
+| LBRACE expritems RBRACE {$2}
+
+expritems:
+| {[]}
+| expr expritems {$1::$2}
+
+
+expr:
+| WORD {Cons($1, [], Hmap.empty)}
+| LBRACE BINDER vardecllist expr RBRACE {binders_from_cons (List.fold_left (fun e (v, t) -> Cons($2, [Cons(v, [], Hmap.empty);t;e], Hmap.empty)) $4 (List.rev $3))}
+| LBRACE BINDER expr expr expr RBRACE {binders_from_cons (Cons($2, [$3; $4; $5], Hmap.empty))}
+| LBRACE WORD expritems RBRACE {Cons($2, $3, Hmap.empty)}
+
+vardecllist:
+| LBRACE vardeclitems RBRACE {$2}
+
+vardeclitems:
+| {[]}
+| LBRACE WORD expr RBRACE vardeclitems {($2, $3)::$5}
 
 

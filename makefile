@@ -1,7 +1,7 @@
 SRC=src/*
 all:dataabs
 build/src/main.native: $(SRC)
-	ocamlbuild main.native -I src -build-dir build
+	ocamlbuild main.native -I src -build-dir build -package hmap
 dataabs: build/src/main.native
 	cp $^ $@
 clean:
