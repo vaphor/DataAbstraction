@@ -347,7 +347,7 @@ let ackermanise e =
                                                               mk_imply (mk_eq r1 r2) (mk_eq v1 v2)
                                                             ) reads)) reads)) in
                                     let replace i r e=replace_all_opt (fun x -> if equiv x (mk_select vn r)  then Some(extract v (i)) else None) e in
-                                    let newe = mk_imply diff (snd (List.fold_left (fun (i, e) r -> (i, replace i r e)) (0, ebase) reads)) in
+                                    let newe = mk_imply diff (snd (List.fold_left (fun (i, e) r -> (i+1, replace i r e)) (0, ebase) reads)) in
                                     redoforall newe
                                 ), no_annot) 
                            in
