@@ -8,13 +8,12 @@ open Combinators
 open Cellabs
 open Horn
 
+(*Here we define our full abstraction!*)
 let myabs n pname ptype =
    let rec create_abs ptype =
     match ptype with
      | Cons("Tuple", l, a) -> 
          tuple_dot (List.map create_abs l)
-     | Cons("Array", [t1;(Cons("Array", [ind2; v2],_) as t2)], a) -> 
-         duplicate (compose (dot (mk_id t1) (mk_cellabs ind2 v2)) (mk_cellabs t1 t2)) n
      | Cons("Array", [t1;t2], a) -> 
          duplicate (mk_cellabs t1 t2) n
      | _ -> mk_id ptype 

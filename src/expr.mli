@@ -31,6 +31,8 @@ val replace_all_opt : (expr -> expr option) -> expr -> expr
 (* Verifies if two expressions are equivalent without caring about annotations and binder names *)
 val equiv : expr -> expr -> bool
 
+(*Returns if there is a subexpression satisfying the predicate*)
+val exists_expr : (expr -> bool) -> expr -> bool
 (*------------------Handling binders----------------*)
 
 (*string associated with binder*)
