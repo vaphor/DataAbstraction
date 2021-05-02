@@ -7,19 +7,15 @@ open Dataabs
 open Combinators
 open Cellabs
 open Horn
+open Fullabstractions
 
-(*Here we define our full abstraction!*)
-let myabs n pname ptype =
-   let rec create_abs ptype =
-    match ptype with
-     | Cons("Tuple", l, a) -> 
-         tuple_dot (List.map create_abs l)
-     | Cons("Array", [t1;t2], a) -> 
-         duplicate (mk_cellabs t1 t2) n
-     | _ -> mk_id ptype 
-   in
-   (pname^"_abs", create_abs ptype)
-   
+let get_full_abs_from_name str =
+  match str with
+  | celln when (String.sub str 0 4) = "Cell" -> all_arrays_cell (int_of_string (String.sub str 4 (-1))) 
+  | "Smashing" -> smash_all
+  | _ -> failwith (Printf.sprintf "Unknown abstraction %s" str)
+
+
 
 let __ =
   Printexc.record_backtrace(true);
@@ -27,8 +23,9 @@ let __ =
     let cf = read_args() in
     Printexc.record_backtrace(false);
     if cf.debug then Printf.printf "File is %s\n" cf.f_name;
+    let myabs = get_full_abs_from_name cf.abstraction in
     let h = import_horn cf.f_name in
-    let abstracted = if cf.abstract_only then abstract_horn (myabs cf.distinct_i) h else dataabs_horn (myabs cf.distinct_i) h in
+    let abstracted = if cf.abstract_only then abstract_horn myabs h else dataabs_horn myabs h in
     let simplified = if cf.simplify then Horn.simplify ~acker:cf.acker abstracted else abstracted in
     export_horn_smt2 simplified cf.outputsmt_name
    with

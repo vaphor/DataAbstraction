@@ -20,7 +20,7 @@ open Format
 type config_t = {
   f_name:string;
   outputsmt_name:string;
-  distinct_i:int;
+  abstraction:string;
   debug:bool;
   version:string;
   acker:bool;
@@ -43,15 +43,13 @@ let set_fname config (s:string) =
   then config := {!config with f_name=s}
   else raise (NotFound s) 
 
-let set_di config nb =
-  if (nb < 1)
-  then raise (Usage "nb distinguished should be >= 1")
-  else config := {!config with distinct_i=nb}
+let set_abs config str =
+  config := {!config with abstraction=str}
 					   
 let make_default_config () = {
   f_name="";
   outputsmt_name="stdout";
-  distinct_i = 1;
+  abstraction = "Cell1";
   debug=false;
   version="NA";
   acker=false;
@@ -59,8 +57,8 @@ let make_default_config () = {
   simplify=true;
 }
 			       
-let string_config cf =
-  Printf.sprintf "inputfile=%s,di=%d,acker=%b\n" cf.f_name cf.distinct_i cf.acker
+(*let string_config cf =
+  Printf.sprintf "inputfile=%s,di=%d,acker=%b\n" cf.f_name cf.distinct_i cf.acker*)
 			       
 let read_args () =
   let cf = ref (make_default_config()) in
@@ -70,7 +68,7 @@ let read_args () =
       ("-no_simplify",Arg.Unit (set_no_simplify cf) ,": do not simplify the result. This exposes internal theories.");
       ("-acker",Arg.Unit (set_acker cf) ,": ackermanise arrays when possible");
       ("-debug", Arg.Unit (set_debug cf) ,": all debug info");
-      ("-nbcells", Arg.Int (set_di cf) ,": Number of cells used (n of Cell n abstraction)");
+      ("-abstraction", Arg.String (set_abs cf) ,": Abstraction to use. Can be Cell1, Cell2, ... Smashing");
       ("-o", Arg.String (set_outputsmt cf) ,": outputfile, default is res.smt2");
     ] in
   let usage_msg = "Usage : ./vaphor [options] file.smt2" in
