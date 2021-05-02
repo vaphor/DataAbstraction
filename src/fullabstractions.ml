@@ -1,14 +1,12 @@
 open Expr
 open Io
-open Config
 open Dataabs
 open Combinators
 open Cellabs
-open Horn
+type full_abs=string (*pname*) -> expr (*ptype*) -> (string (*abs panme*) * abstraction (*abstraction*))
 
 
-
-  (*Here we define our full abstraction!*)
+(*Here we define our full abstraction!*)
 let all_arrays_cell n pname ptype =
    let rec create_abs ptype =
     match ptype with

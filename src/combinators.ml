@@ -1,5 +1,6 @@
 open Expr
 open Dataabs
+open Io
 
 let mk_id t = 
   {
@@ -174,3 +175,53 @@ let duplicate abstraction n =
     fsigma = fs;
     insts = instset;     
   }
+  
+  
+  let reorganize_tuples initialtype str=
+    let tree = parse_expr str in
+    let rec get_val str t=
+      try 
+        let fst_elem_index = String.index str '.'  in
+        let i = int_of_string (String.sub str 0 fst_elem_index) in
+        let rest = String.sub str (fst_elem_index+1) (-1) in
+        get_val rest (extract t i)
+      with
+      | Not_found -> extract t (int_of_string str)
+    in
+    
+    let rec compute_abs_type tree=
+      match tree with
+      |  Cons("tuple", l, _) ->  mk_tuple (List.map compute_abs_type l)
+      |  Cons(str, [], _) -> get_val str initialtype
+      | _ -> failwith (Printf.sprintf "Unknwn value %s for reorganizing tuples" (print_expr tree))
+    in
+    
+    let rec fs a b tree= 
+      match tree with
+      |  Cons("tuple", l, _) ->  mk_and (List.mapi (fun i e -> fs (extract a i) b e) l)
+      |  Cons(str, [], _) -> mk_eq a (get_val str b)
+      | _ -> failwith (Printf.sprintf "Unknwn value %s for reorganizing tuples" (print_expr tree))
+    in
+    
+    let rec fsq q a b tree= 
+      match tree with
+      |  Cons("tuple", l, _) ->  mk_and (List.mapi (fun i e -> fsq q (extract a i) b e) l)
+      |  Cons(str, [], _) -> mk_eq a (get_val str b)
+      | _ -> failwith (Printf.sprintf "Unknown value %s for reorganizing tuples" (print_expr tree))
+    in
+    
+    let rec instset a ctx tree=
+      match tree with
+      |  Cons("tuple", l, _) ->  mk_tuple (List.mapi (fun i e -> instset (extract a i) ctx e) l)
+      |  Cons(str, [], _) -> get_val str a
+      | _ -> failwith (Printf.sprintf "Unknown value %s for reorganizing tuples" (print_expr tree))
+    in     
+    
+    {
+    name = Printf.sprintf "tuple_reorganisation";
+    concrete_type = initialtype;
+    abstract_type = compute_abs_type tree;
+    fsigma = (fun a b -> fs a b tree);
+    fsigmaq = (fun q a b -> fsq q a b tree);
+    insts = (fun a ctx -> Insts_set.singleton ((instset a ctx tree, mk_unit)));
+   }
