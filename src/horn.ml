@@ -4,7 +4,7 @@ type command =
 | Comment of string
 | Clause of expr
 
-type horn = (command list) * ((string * expr) list) (*predicate declaration*)
+type horn = (command list) * ((string * expr (*the predicate type*)) list) (*predicate declaration*)
   
 
 

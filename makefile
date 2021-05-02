@@ -4,6 +4,10 @@ build/src/main.native: $(SRC)
 	ocamlbuild main.native -I src -build-dir build -package hmap
 dataabs: build/src/main.native
 	cp $^ $@
+	
+readme: 
+	grip -b README.md
+	
 clean:
 	rm -rf build/
 demo: demo.smt2 dataabs
@@ -17,6 +21,6 @@ test: demo.smt2 dataabs
 	@echo "Result is : " $$(z3 build/demoabs.smt2)
 	@echo "Expected is : sat"
 	
-.PHONY: demo test clean
+.PHONY: demo test clean readme
 
 

@@ -68,11 +68,9 @@ let read_args () =
     [
       ("-absonly",Arg.Unit (set_abs_only cf) ,": only abstract");
       ("-no_simplify",Arg.Unit (set_no_simplify cf) ,": do not simplify the result. This exposes internal theories.");
-      ("--version",Arg.Unit (fun () -> fprintf std_formatter "vaphor Version %s@." !cf.version ; raise(Version)),": print version and exit");
       ("-acker",Arg.Unit (set_acker cf) ,": ackermanise arrays when possible");
-(*       ("--version",Arg.Unit (fun () -> fprintf std_formatter "vaphor Version %s@." !cf.version ; raise(Version)),": print version and exit"); *)
       ("-debug", Arg.Unit (set_debug cf) ,": all debug info");
-      ("-distinct", Arg.Int (set_di cf) ,": #distinguished elements in abstraction. Not available yet !");
+      ("-nbcells", Arg.Int (set_di cf) ,": Number of cells used (n of Cell n abstraction)");
       ("-o", Arg.String (set_outputsmt cf) ,": outputfile, default is res.smt2");
     ] in
   let usage_msg = "Usage : ./vaphor [options] file.smt2" in
