@@ -21,7 +21,7 @@ let all_arrays_cell n pname ptype =
 (*Abstracts an expression of type pair(t1, t2) into t2.
   Equivalent to forget.id of the paper.
   sigma_{forget_first}(e1,e2) = \{e2\} *)
-let forget_first t1 t2 =                                                                                                                                                                                              
+(*let forget_first t1 t2 =                                                                                                                                                                                              
   {                                                                                                                                                                                                        
     name = Printf.sprintf "forgetfst";                                                                                                                                                                            
     concrete_type = mk_tuple [t1;t2];                                                                                                                                                                                     
@@ -31,10 +31,10 @@ let forget_first t1 t2 =
     fsigmaq = (fun q abstract conc -> Cons("=", [abstract; (esnd conc)], Hmap.empty));  
     (*The instantiation is finite, we thus use [e2] as instantiation set and it is strongly complete*)
     insts = fun a ctx -> Insts_set.singleton (esnd a, mk_unit);                                                                                                                                                 
-  }  
+  }  *)
   
 (*indtype (recpectively valtype) is the index (respectively value) type of the array to abstract*)
-let array_smashing indtype valtype =  compose (forget_first indtype valtype) (mk_cellabs indtype valtype)
+let array_smashing indtype valtype =  compose (reorganize_tuples (mk_tuple [indtype;valtype]) "2") (mk_cellabs indtype valtype)
 
 let smash_all pname ptype =
    let rec create_abs ptype =

@@ -20,6 +20,7 @@ rule token = parse
 | comment {let s = Lexing.lexeme lexbuf in COMMENT(String.sub s 1 ((String.length s)-1))}
 | "(" {LBRACE}
 | ")" {RBRACE}
+| "," {COMMA}
 | "forall" {BINDER("forall")}
 | "exists" {BINDER("exists")}
 | "declare-rel" {DECLAREREL}

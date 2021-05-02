@@ -4,7 +4,7 @@ open Expr
 open Horn
 %}
 
-%token LBRACE RBRACE CHECKSAT DECLAREFUN DECLAREREL ASSERT EOF SETLOGIC
+%token LBRACE RBRACE CHECKSAT DECLAREFUN DECLAREREL ASSERT EOF SETLOGIC COMMA
 %token <string> WORD COMMENT BINDER
 
 %start horn expr
@@ -41,12 +41,16 @@ expritems:
 | {[]}
 | expr expritems {$1::$2}
 
+commaseparateditems:
+| expr {[$1]}
+| expr COMMA commaseparateditems {$1::$3}
 
 expr:
 | WORD {Cons($1, [], Hmap.empty)}
 | LBRACE BINDER vardecllist expr RBRACE {binders_from_cons (List.fold_left (fun e (v, t) -> Cons($2, [Cons(v, [], Hmap.empty);t;e], Hmap.empty)) $4 (List.rev $3))}
 | LBRACE BINDER expr expr expr RBRACE {binders_from_cons (Cons($2, [$3; $4; $5], Hmap.empty))}
 | LBRACE WORD expritems RBRACE {Cons($2, $3, Hmap.empty)}
+| LBRACE commaseparateditems RBRACE {mk_tuple $2}
 
 vardecllist:
 | LBRACE vardeclitems RBRACE {$2}
