@@ -183,7 +183,7 @@ let duplicate abstraction n =
       try 
         let fst_elem_index = String.index str '.'  in
         let i = int_of_string (String.sub str 0 fst_elem_index) in
-        let rest = String.sub str (fst_elem_index+1) (-1) in
+        let rest = String.sub str (fst_elem_index+1) ((String.length str) -(fst_elem_index+1)) in
         get_val rest (extract t i)
       with
       | Not_found -> extract t (int_of_string str)
@@ -193,7 +193,7 @@ let duplicate abstraction n =
       match tree with
       |  Cons("tuple", l, _) ->  mk_tuple (List.map compute_abs_type l)
       |  Cons(str, [], _) -> get_val str initialtype
-      | _ -> failwith (Printf.sprintf "Unknwn value %s for reorganizing tuples" (print_expr tree))
+      | _ -> failwith (Printf.sprintf "Unknown value %s for reorganizing tuples" (print_expr tree))
     in
     
     let rec fs a b tree= 

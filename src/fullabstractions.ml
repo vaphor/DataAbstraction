@@ -34,7 +34,7 @@ let all_arrays_cell n pname ptype =
   }  *)
   
 (*indtype (recpectively valtype) is the index (respectively value) type of the array to abstract*)
-let array_smashing indtype valtype =  compose (reorganize_tuples (mk_tuple [indtype;valtype]) "2") (mk_cellabs indtype valtype)
+let array_smashing indtype valtype =  compose (reorganize_tuples (mk_tuple [indtype;valtype]) "1") (mk_cellabs indtype valtype)
 
 let smash_all pname ptype =
    let rec create_abs ptype =

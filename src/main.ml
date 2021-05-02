@@ -11,7 +11,7 @@ open Fullabstractions
 
 let get_full_abs_from_name str =
   match str with
-  | celln when (String.sub str 0 4) = "Cell" -> all_arrays_cell (int_of_string (String.sub str 4 (-1))) 
+  | celln when (String.sub str 0 4) = "Cell" -> all_arrays_cell (int_of_string (String.sub str 4 ((String.length str) - 4))) 
   | "Smashing" -> smash_all
   | _ -> failwith (Printf.sprintf "Unknown abstraction %s" str)
 
@@ -21,7 +21,7 @@ let __ =
   Printexc.record_backtrace(true);
   try
     let cf = read_args() in
-    Printexc.record_backtrace(false);
+(*     Printexc.record_backtrace(false); *)
     if cf.debug then Printf.printf "File is %s\n" cf.f_name;
     let myabs = get_full_abs_from_name cf.abstraction in
     let h = import_horn cf.f_name in
