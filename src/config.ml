@@ -53,7 +53,7 @@ let make_default_config () = {
   outputsmt_name="stdout";
   distinct_i = 1;
   debug=false;
-  version="1.2 Sept 2016";
+  version="NA";
   acker=false;
   abstract_only=false;
   simplify=true;
@@ -70,7 +70,7 @@ let read_args () =
       ("-no_simplify",Arg.Unit (set_no_simplify cf) ,": do not simplify the result. This exposes internal theories.");
       ("--version",Arg.Unit (fun () -> fprintf std_formatter "vaphor Version %s@." !cf.version ; raise(Version)),": print version and exit");
       ("-acker",Arg.Unit (set_acker cf) ,": ackermanise arrays when possible");
-      ("--version",Arg.Unit (fun () -> fprintf std_formatter "vaphor Version %s@." !cf.version ; raise(Version)),": print version and exit");
+(*       ("--version",Arg.Unit (fun () -> fprintf std_formatter "vaphor Version %s@." !cf.version ; raise(Version)),": print version and exit"); *)
       ("-debug", Arg.Unit (set_debug cf) ,": all debug info");
       ("-distinct", Arg.Int (set_di cf) ,": #distinguished elements in abstraction. Not available yet !");
       ("-o", Arg.String (set_outputsmt cf) ,": outputfile, default is res.smt2");
