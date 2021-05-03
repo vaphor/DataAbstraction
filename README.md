@@ -42,6 +42,10 @@ Run `./dataabs in.smt2` where *in.smt2* represents the smt2 file containing the 
 The output is written on *stdout* and is in smt2 format and represents the abstracted clauses.
 The abstraction used is *Cell^1* on all arrays of all predicates.
 
+We provide the running clause of the SAS2021 paper as a separate Horn problem in the file *running_clause.smt2*. 
+A good first launch consists in comparing the results of `./dataabs running_clause.smt2` and clause 10 of the SAS2021 paper.
+
+
 ## Options
 
 The tool's options can be displayed with `./dataabs -h`. The most relevant options are:
