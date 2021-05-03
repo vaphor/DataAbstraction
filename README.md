@@ -14,7 +14,7 @@ The tool is an element of a static program (or other) verification process which
 2. Simplify the Horn clauses using data abstraction (this tool).
 3. Solve the Horn clauses using a Horn solver such as [Z3](https://github.com/Z3Prover/z3)
 
-The full toolchain using [MiniJavaConverter](https://github.com/vaphor/hornconverter) and [Z3](https://github.com/Z3Prover/z3), docker and benchmarks are available at [array-benchmarks](https://github.com/vaphor/array-benchmarks).
+Benchmarks using [MiniJavaConverter](https://github.com/vaphor/hornconverter) and [Z3](https://github.com/Z3Prover/z3) toolchain are available at [array-benchmarks](https://github.com/vaphor/array-benchmarks). A Docker image for this toolchain is available at [dockerimage](https://hub.docker.com/r/jbraine/data_abstraction_benchmarks).
 
 
 # Installing the tool
@@ -26,6 +26,7 @@ The tool is written in Ocaml and we use
 - the Hmap package
 
 ## Install
+__Note : If you are using the docker image, the toolchain is already installed. You should directly skip to the Running section__
 
 Running `make` should build the tool and create an executable named *dataabs*.
 
