@@ -11,8 +11,8 @@ It is currently set to use the full algorithm using Cell^n abstraction presented
 
 The tool is an element of a static program (or other) verification process which is done in three steps:
 1. Transform the verification problem into Horn clauses, perhaps using [MiniJavaConverter](https://github.com/vaphor/hornconverter) or [SeaHorn](https://github.com/seahorn/seahorn)
-2. This tool which simplifies the Horn clauses using abstraction.
-3. A Horn solver such as [Z3](https://github.com/Z3Prover/z3)
+2. Simplify the Horn clauses using data abstraction (this tool).
+3. Solve the Horn clauses using a Horn solver such as [Z3](https://github.com/Z3Prover/z3)
 
 The full toolchain using [MiniJavaConverter](https://github.com/vaphor/hornconverter) and [Z3](https://github.com/Z3Prover/z3), docker and benchmarks are available at [array-benchmarks](https://github.com/vaphor/array-benchmarks).
 
