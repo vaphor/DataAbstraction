@@ -7,7 +7,7 @@ __Licence__ : GPL
 The tool implements a technique to transform Horn clauses which require array invariants so solve them into
 Horn clauses that do not need array invariants by using an abstraction scheme. The technique is described in the paper 
 *Data Abstraction: A General Framework to Handle Program Verification of Data Structures* presented to SAS2021. 
-It is currently set to use the full algorithm using Cell^n abstraction presented in Algorithm 6, page 5.
+It is currently set to use the full algorithm using Cell^n abstraction presented in Algorithm 7, page 15.
 
 The tool is an element of a static program (or other) verification process which is done in three steps:
 1. Transform the verification problem into Horn clauses, perhaps using [MiniJavaConverter](https://github.com/vaphor/hornconverter) or [SeaHorn](https://github.com/seahorn/seahorn)
@@ -26,7 +26,7 @@ The tool is written in Ocaml and we use
 - the Hmap package
 
 ## Install
-__Note : If you are using the docker image, the toolchain is already installed. You should directly skip to the Running section__
+__Note : If you are using the docker image, the toolchain is already installed. You should directly skip to the Running section.__
 
 Running `make` should build the tool and create an executable named *dataabs*.
 
@@ -125,3 +125,6 @@ let myabs n pname ptype =
 Note: one may not one to abstract uniformly all predicates and all arrays. 
 This can be avoided by doing different things depending on *pname* or the position of the array in the tuple
 (do not do `(List.map create_abs l)` which applies *create_abs* on all parameters uniformely).
+
+Note: array smashing is usually a bad abstraction choice as it is unable to prove any relevant properties on arrays. 
+You should not be surprised if all your Horn problems then non-satisfiable.
