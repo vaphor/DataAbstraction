@@ -26,7 +26,7 @@ The tool is written in Ocaml and we use
 - the Hmap package
 
 ## Install
-__Note : If you are using the docker image, the toolchain is already installed. You should directly skip to the Running section.__
+__Note : If you are using the docker image, the toolchain is already installed. Make sure that you've have sourced .profile in your terminal and skip to the Running section.__
 
 Running `make` should build the tool and create an executable named *dataabs*.
 
@@ -108,7 +108,7 @@ let forget_first t1 t2 =
 (*indtype (recpectively valtype) is the index (respectively value) type of the array to abstract*)
 let array_smashing indtype valtype =  compose (forget_first indtype valtype) (mk_cellabs indtype valtype)
 ```
-## Using it on all arrays of all predicates
+### Using it on all arrays of all predicates
 
 We only need to change the *myabs* function from *main.ml*
 ```ocaml
@@ -129,4 +129,4 @@ This can be avoided by doing different things depending on *pname* or the positi
 (do not do `(List.map create_abs l)` which applies *create_abs* on all parameters uniformely).
 
 Note: array smashing is usually a bad abstraction choice as it is unable to prove any relevant properties on arrays. 
-You should not be surprised if all your Horn problems then non-satisfiable.
+You should not be surprised if all your Horn problems then become unsatisfiable.
