@@ -30,6 +30,8 @@ __Note : If you are using the docker image, the toolchain is already installed. 
 
 Running `make` should build the tool and create an executable named *dataabs*.
 
+Note : you may have depredecation warnings as we retain compatibility with old versions of Ocaml.
+
 ## Test
 
 Run `make demo` to check that the tool run correctly on *demo.smt2* and, if you have [Z3](https://github.com/Z3Prover/z3) installed, use `make test` to check the result
