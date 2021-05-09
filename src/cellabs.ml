@@ -2,28 +2,35 @@ open Dataabs
 open Expr
 
 let top= mk_const "___top___"
-
-let rec get_array_store_chain a =
+  
+let rec get_base_array a =
   match a with
   | Cons("store", [x;ind;v], _) -> 
-      let (basea, l) = get_array_store_chain x in
-      (basea, (ind, v)::l)
-  | _ -> (a, [])
+      let (basea, depth, l) = get_base_array x in
+      (basea, depth, (ind, v)::l)
+  | Cons("select", [x;ind], _) ->
+      let (basea, depth, l) = get_base_array x in
+      (basea, depth+1, [])
+  | _ -> (a, 0, [])
 
 let relevant a ctx =
-  let rec read avar expr =
-    match expr with 
-    | Cons("select", [b;i], _) when equiv (fst (get_array_store_chain b)) avar -> 
-      i::(List.flatten (List.map (fun (j, v) -> (read avar j) @ (read avar v)) (snd (get_array_store_chain b))))
-    | a when equiv a avar -> [top]
-    | Cons(str, args, _) -> List.flatten (List.map (read avar) args)
-    | Binder(_, _, _, f, _) -> List.map (fun x -> if exists_expr (fun x -> equiv x top) x then top else x) (read avar (f top))
+  let rec read avar depth expr =
+      match expr with 
+      | Cons("select", [b;i], _) ->
+         let (basea, d, stores) = get_base_array b in
+         let recreads = match b with | Cons(_, [], _) -> read avar depth i | _ -> (read avar depth i) @ (read avar depth b) in
+         if (equiv basea avar) && (d=depth) then
+           i::recreads
+         else 
+           recreads
+      | a when equiv a avar -> [top]
+      | Cons(str, args, _) -> List.flatten (List.map (read avar depth) args)
+      | Binder(_, _, _, f, _) -> List.map (fun x -> if exists_expr (fun x -> equiv x top) x then top else x) (read avar depth (f top))      
   in
-  let (basea, l) = get_array_store_chain a in
+  let (basea, depth, l) = get_base_array a in
   match basea with
-  | Cons(_, [], _) -> read basea ctx
+  | Cons(str, [], _) -> (read basea depth ctx) @ (List.map fst l)
   | _ -> [top]
-  
   
 let mk_cellabs t1 t2=
       {
@@ -34,6 +41,7 @@ let mk_cellabs t1 t2=
          fsigmaq  = (fun q iv a ->  Cons("=", [esnd iv; (Cons("select", [a; efst iv], Hmap.empty))], Hmap.empty));
          insts = (fun a ctx ->
             let r = relevant (simplify_tuples a) (simplify_tuples ctx) in
+            if List.exists (fun x -> equiv x top) r then Printf.eprintf "Got top in relevant set. Extracted from relevant %s in ctx\n%s\n\n" (print_expr (simplify a)) (print_expr (simplify ctx));
             let rtop = List.filter (fun x -> not (equiv x top)) r in
             let ind = if rtop =[] then [mk_const "17"] else rtop in
             let iset = List.map (fun r -> 
@@ -43,3 +51,21 @@ let mk_cellabs t1 t2=
             ) ind in
            Insts_set.of_list iset);
       }
+      
+let mk_currified_cellabs t1 t2=
+        let t = Cons("Array", [t1;t2], Hmap.empty) in
+        let rec mabs t=
+           match t with
+           | Cons("Array", [t1;t2], _) -> 
+            (
+             let fabs = mk_cellabs t1 t2 in
+             match mabs t2 with
+             | None -> Some(fabs)
+             | Some(sabs) -> Some(Combinators.compose (Combinators.tuple_dot [(Combinators.mk_id t1);sabs]) fabs)
+            )
+           | _ -> None
+         in
+         match mabs t with
+         | None -> failwith "Impossible"
+         | Some(mabs) -> mabs
+      

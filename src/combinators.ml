@@ -91,9 +91,9 @@ let tuple_dot l =
 
 (*abs1 \circ abs2 *)
 let compose abs1 abs2 =
-  if not (equiv abs2.abstract_type abs1.concrete_type) then
+  if not (equiv (simplify abs2.abstract_type) (simplify abs1.concrete_type)) then
     failwith (Printf.sprintf "Unmatching types in abstraction composition. Abstraction2 abstract type is \"%s\" and abstraction1 concrete type is \"%s\"" 
-                              (print_expr abs2.abstract_type) (print_expr abs1.concrete_type))
+                              (print_expr (simplify abs2.abstract_type)) (print_expr (simplify abs1.concrete_type)))
   ;
   
   let fs a b= 
@@ -105,6 +105,7 @@ let compose abs1 abs2 =
   in
   
   let instset a ctx =
+(*       Printf.eprintf "Composed called with a=%s ctx=\n%s\n\n" (print_expr a) (print_expr (simplify ctx)); *)
       let i2 = Insts_set.elements (abs2.insts a ctx) in
       let i2mx x = List.filter (fun y -> y=x) i2 in
       let fs2 x = abs2.fsigmaq (snd x) (fst x) a in
@@ -148,7 +149,7 @@ let set_to_n_map f n s  =
      (mk_list (n - 1))) 
   
 let duplicate abstraction n =
-  if n = 1 then abstraction else
+(*   if n = 1 then abstraction else *)
   let fsq q a b = 
       Cons("and", 
           List.map (fun i -> 
@@ -177,11 +178,13 @@ let duplicate abstraction n =
   }
   
   
-  let reorganize_tuples initialtype str=
-    let tree = parse_expr str in
+  let reorganize_tuples initialtype tree=
+    Printf.printf "Reorganizing tuples typed with %s by %s" (print_expr initialtype) (print_expr tree);
+(*     let tree = parse_expr str in *)
+(*     Printf.printf "Parsed is %s" (print_expr tree); *)
     let rec get_val str t=
       try 
-        let fst_elem_index = String.index str '.'  in
+        let fst_elem_index = String.index str '_'  in
         let i = int_of_string (String.sub str 0 fst_elem_index) in
         let rest = String.sub str (fst_elem_index+1) ((String.length str) -(fst_elem_index+1)) in
         get_val rest (extract t i)
@@ -191,32 +194,32 @@ let duplicate abstraction n =
     
     let rec compute_abs_type tree=
       match tree with
-      |  Cons("tuple", l, _) ->  mk_tuple (List.map compute_abs_type l)
+      |  Cons("Tuple", l, _) ->  mk_tuple (List.map compute_abs_type l)
       |  Cons(str, [], _) -> get_val str initialtype
       | _ -> failwith (Printf.sprintf "Unknown value %s for reorganizing tuples" (print_expr tree))
     in
     
     let rec fs a b tree= 
       match tree with
-      |  Cons("tuple", l, _) ->  mk_and (List.mapi (fun i e -> fs (extract a i) b e) l)
+      |  Cons("Tuple", l, _) ->  mk_and (List.mapi (fun i e -> fs (extract a i) b e) l)
       |  Cons(str, [], _) -> mk_eq a (get_val str b)
       | _ -> failwith (Printf.sprintf "Unknwn value %s for reorganizing tuples" (print_expr tree))
     in
     
     let rec fsq q a b tree= 
       match tree with
-      |  Cons("tuple", l, _) ->  mk_and (List.mapi (fun i e -> fsq q (extract a i) b e) l)
+      |  Cons("Tuple", l, _) ->  mk_and (List.mapi (fun i e -> fsq q (extract a i) b e) l)
       |  Cons(str, [], _) -> mk_eq a (get_val str b)
       | _ -> failwith (Printf.sprintf "Unknown value %s for reorganizing tuples" (print_expr tree))
     in
     
     let rec instset a ctx tree=
       match tree with
-      |  Cons("tuple", l, _) ->  mk_tuple (List.mapi (fun i e -> instset (extract a i) ctx e) l)
+      |  Cons("Tuple", l, _) ->  mk_tuple (List.mapi (fun i e -> instset a ctx e) l)
       |  Cons(str, [], _) -> get_val str a
       | _ -> failwith (Printf.sprintf "Unknown value %s for reorganizing tuples" (print_expr tree))
     in     
-    
+    Printf.printf "\n\nabstype is %s\n\n" (print_expr (simplify (compute_abs_type tree)));
     {
     name = Printf.sprintf "tuple_reorganisation";
     concrete_type = initialtype;
@@ -224,4 +227,32 @@ let duplicate abstraction n =
     fsigma = (fun a b -> fs a b tree);
     fsigmaq = (fun q a b -> fsq q a b tree);
     insts = (fun a ctx -> Insts_set.singleton ((instset a ctx tree, mk_unit)));
+   }
+   
+   
+let restrict initialtype cond=
+   {
+    name = Printf.sprintf "restrict";
+    concrete_type = initialtype;
+    abstract_type = initialtype;
+    fsigma = (fun a b -> mk_and [mk_eq a b; cond b]);
+    fsigmaq = (fun q a b -> mk_and [mk_eq a b; cond b]);
+    insts = (fun a ctx -> Insts_set.singleton (a, mk_unit));
+   }
+   
+   
+let union initialtype =
+  let (t, n) =
+    match initialtype with
+    | Cons("Tuple", a::q, _) -> if List.exists (fun t -> not (equiv t a)) q then failwith "Different types in union, aborting";
+                                (a, List.length (a::q))
+    | _ -> failwith "union of non tuple type..."
+  in
+   {
+    name = Printf.sprintf "union";
+    concrete_type = initialtype;
+    abstract_type = t;
+    fsigma = (fun a b -> mk_or (List.map (fun i -> mk_eq a (extract b i)) (mk_list n)));
+    fsigmaq = (fun q a b -> mk_or (List.map (fun i -> mk_eq a (extract b i)) (mk_list n)));
+    insts = (fun a ctx -> Insts_set.of_list (List.map (fun i ->  ((extract a i), mk_unit)) (mk_list n)));
    }

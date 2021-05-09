@@ -8,7 +8,7 @@ exception Eof
 }
 
 (*Any basic element of the horn language*)
-let word = [^' ''\n'')''('';']*
+let word = [^' '',''\n'')''('';']*
 let tupleword = "|tuple("[^'\n'')''('';']*")|"
 let newline = "\n" | "\r" | "\r\n"
 let comment = ';'[^'\n''\r']*

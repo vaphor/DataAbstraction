@@ -93,14 +93,14 @@ let export_expr_smt2 e file=
 let print_horn_smt2 h =
  (*Flattening apply P tuple(...) *)
  let rec nt vt =
-   match vt with 
+   match Expr.simplify vt with 
       | Cons("Tuple", l, _) -> List.flatten (List.map nt l)
-      | _ -> [vt] in
+      | x -> [x] in
  let rec f vt arg  =
       match vt with 
       | Cons("Tuple", l, a) -> List.flatten (List.mapi (fun i x -> (f x (extract arg i))) l)
       | _ -> [arg] in
-  let declp = String.concat "\n" (List.map (fun (pn, pt) -> Printf.sprintf "(declare-rel %s (%s))" pn (String.concat " " (List.map print_expr_smt2 (nt pt)))) (snd h)) in
+  let declp = (String.concat "\n" (List.map (fun (pn, pt) -> Printf.sprintf "(declare-rel %s (%s))" pn (String.concat " " (List.map print_expr_smt2 (nt pt)))) (snd h)))^"\n" in
   
       
   

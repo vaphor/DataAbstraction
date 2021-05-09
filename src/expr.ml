@@ -197,7 +197,22 @@ let rec simplify_bool expr =
       match final with
       | [] -> Cons("true", [], Hmap.empty)
       | [x] -> simplify_bool x
+      | l when List.exists (fun x -> equiv x (mk_const "false")) l -> mk_const "false"
       | _ -> if List.length final  = List.length l' then Cons(op, l', a) else simplify_bool (Cons("and", final, Hmap.empty))
+      )
+    | ("or", l') -> 
+      let lands = List.flatten (List.map (fun x -> match x with
+        | Cons("or", l2, _) -> l2
+        | _ -> [x]) l') in
+      let lfiltered = List.filter (fun x -> match x with Cons("false", [], _) -> false | _ -> true) lands in
+      let final = rm_duplicates lfiltered in
+        
+      (
+      match final with
+      | [] -> Cons("false", [], Hmap.empty)
+      | [x] -> simplify_bool x
+      | l when List.exists (fun x -> equiv x (mk_const "true")) l -> mk_const "true"
+      | _ -> if List.length final  = List.length l' then Cons(op, l', a) else simplify_bool (Cons("or", final, Hmap.empty))
       )
     | _ -> Cons(op, l', a)
    )
@@ -264,32 +279,44 @@ let rec split_tuple_binders e =
       split_tuple_binders newe
   | Binder(bt, v, t, f, a) -> Binder(bt, v, t, (fun x -> split_tuple_binders (f x)), a)
   
+  
+let tmp=ref 0 
+
 let rec simplify_tuples e =
+  tmp:=!tmp+1;
+  let mtmp = !tmp in
+(*   Printf.printf "Call %i. Simplify tuples called with %s\n\n" (!tmp) (print_expr e); *)
   match e with
   | Cons(op, x, a) ->
     (
       let l = List.map simplify_tuples x in
+(*       Printf.printf "Call %i. Got: %s\n\n" (mtmp) (String.concat " " (List.map print_expr l)); *)
       match (op, l) with
-      | ("extract", [Cons("Tuple", l, _); Cons(n, [], _)]) -> 
-           List.nth l (int_of_string n)
+      | ("extract", [Cons("Tuple", lt, _); Cons(n, [], _)]) -> 
+         (
+           try
+             List.nth lt (int_of_string n)
+           with
+           | _ -> failwith (Printf.sprintf "Call %i Extraction is impossible in %s" mtmp (print_expr (Cons(op, l, a))))
+         )
       | ("Tuple", l) -> 
         (
           match l with
           | [] -> mk_unit
-          | Cons("extract", [e;Cons("0", [], _)], _)::q -> 
+          (*| Cons("extract", [e;Cons("0", [], _)], _)::q -> 
               let rec ok l start=
                 match l with
                 | [] -> true
                 | Cons("extract", [e';Cons(n, [], _)], _)::q when n = string_of_int start && equiv e' e -> ok q (start+1)
                 | _ -> false
               in
-              if ok q 1 then e else Cons(op, l, a)
+              if ok q 1 then e else Cons(op, l, a)*)
           | _ -> Cons(op, l, a)
         )
       | ("=", [Cons("Tuple", l1, _); Cons("Tuple", l2, _)]) when List.length l1 = List.length l2 -> mk_and (List.map2 (fun e1 e2 -> mk_eq e1 e2) l1 l2)
       | _ -> Cons(op, l, a)
     )
-  | Binder(bt, n, t, f, a) -> Binder(bt, n, t, (fun e -> simplify_tuples (f e)), a)
+  | Binder(bt, n, t, f, a) -> Binder(bt, n, simplify_tuples t, (fun e -> simplify_tuples (f e)), a)
   
   
   
