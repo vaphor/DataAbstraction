@@ -41,7 +41,7 @@ let mk_cellabs t1 t2=
          fsigmaq  = (fun q iv a ->  Cons("=", [esnd iv; (Cons("select", [a; efst iv], Hmap.empty))], Hmap.empty));
          insts = (fun a ctx ->
             let r = relevant (simplify_tuples a) (simplify_tuples ctx) in
-            if List.exists (fun x -> equiv x top) r then Printf.eprintf "Got top in relevant set. Extracted from relevant %s in ctx\n%s\n\n" (print_expr (simplify a)) (print_expr (simplify ctx));
+            if List.exists (fun x -> equiv x top) r && not (exists_expr (fun x -> equiv x (mk_const "_")) ctx) then Printf.eprintf "Got top in relevant set. Extracted from relevant %s in ctx\n%s\n\n" (print_expr (simplify a)) (print_expr (simplify ctx));
             let rtop = List.filter (fun x -> not (equiv x top)) r in
             let ind = if rtop =[] then [mk_const "17"] else rtop in
             let iset = List.map (fun r -> 

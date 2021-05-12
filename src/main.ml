@@ -28,7 +28,6 @@ let __ =
     let myabs = get_full_abs_from_name cf.abstraction in
     let h = import_horn cf.f_name in
     let abstracted = if cf.abstract_only then abstract_horn myabs h else dataabs_horn myabs h in
-    Printf.eprintf "ok!!!!!";
     let simplified = if cf.simplify then Horn.simplify ~acker:cf.acker abstracted else abstracted in
     export_horn_smt2 simplified cf.outputsmt_name
    with
