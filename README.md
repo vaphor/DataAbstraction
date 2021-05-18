@@ -7,14 +7,14 @@ __Licence__ : GPL
 The tool implements a technique to transform Horn clauses which require array invariants so solve them into
 Horn clauses that do not need array invariants by using an abstraction scheme. The technique is described in the paper 
 *Data Abstraction: A General Framework to Handle Program Verification of Data Structures* presented to SAS2021. 
-It is currently set to use the full algorithm using Cell^n abstraction presented in Algorithm 6, page 5.
+It is currently set to use the full algorithm using Cell^n abstraction presented in Algorithm 7, page 15.
 
 The tool is an element of a static program (or other) verification process which is done in three steps:
 1. Transform the verification problem into Horn clauses, perhaps using [MiniJavaConverter](https://github.com/vaphor/hornconverter) or [SeaHorn](https://github.com/seahorn/seahorn)
-2. This tool which simplifies the Horn clauses using abstraction.
-3. A Horn solver such as [Z3](https://github.com/Z3Prover/z3)
+2. Simplify the Horn clauses using data abstraction (this tool).
+3. Solve the Horn clauses using a Horn solver such as [Z3](https://github.com/Z3Prover/z3)
 
-The full toolchain using [MiniJavaConverter](https://github.com/vaphor/hornconverter) and [Z3](https://github.com/Z3Prover/z3), docker and benchmarks are available at [array-benchmarks](https://github.com/vaphor/array-benchmarks).
+Benchmarks using [MiniJavaConverter](https://github.com/vaphor/hornconverter) and [Z3](https://github.com/Z3Prover/z3) toolchain are available at [array-benchmarks](https://github.com/vaphor/array-benchmarks). A Docker image for this toolchain is available at [dockerimage](https://hub.docker.com/r/jbraine/data_abstraction_benchmarks).
 
 
 # Installing the tool
@@ -26,8 +26,11 @@ The tool is written in Ocaml and we use
 - the Hmap package
 
 ## Install
+__Note : If you are using the docker image, the toolchain is already installed. Make sure that you've have sourced .profile in your terminal and skip to the Running section.__
 
 Running `make` should build the tool and create an executable named *dataabs*.
+
+Note : you may have depredecation warnings as we retain compatibility with old versions of Ocaml.
 
 ## Test
 
@@ -41,6 +44,10 @@ of the demo. Full benchmarks are available at [array-benchmarks](https://github.
 Run `./dataabs in.smt2` where *in.smt2* represents the smt2 file containing the clauses to abstract.
 The output is written on *stdout* and is in smt2 format and represents the abstracted clauses.
 The abstraction used is *Cell^1* on all arrays of all predicates.
+
+We provide the running clause of the SAS2021 paper as a separate Horn problem in the file *running_clause.smt2*. 
+A good first launch consists in comparing the results of `./dataabs running_clause.smt2` and clause 10 of the SAS2021 paper.
+
 
 ## Options
 
@@ -101,7 +108,7 @@ let forget_first t1 t2 =
 (*indtype (recpectively valtype) is the index (respectively value) type of the array to abstract*)
 let array_smashing indtype valtype =  compose (forget_first indtype valtype) (mk_cellabs indtype valtype)
 ```
-## Using it on all arrays of all predicates
+### Using it on all arrays of all predicates
 
 We only need to change the *myabs* function from *main.ml*
 ```ocaml
@@ -120,3 +127,6 @@ let myabs n pname ptype =
 Note: one may not one to abstract uniformly all predicates and all arrays. 
 This can be avoided by doing different things depending on *pname* or the position of the array in the tuple
 (do not do `(List.map create_abs l)` which applies *create_abs* on all parameters uniformely).
+
+Note: array smashing is usually a bad abstraction choice as it is unable to prove any relevant properties on arrays. 
+You should not be surprised if all your Horn problems then become unsatisfiable.
