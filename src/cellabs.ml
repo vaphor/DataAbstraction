@@ -3,6 +3,16 @@ open Expr
 
 let top= mk_const "___top___"
   
+let fsort l =
+  match l with
+  | [x] -> mk_tuple l
+  | [x;y] ->mk_tuple [mk_ite (Cons("<=", [efst x;efst y],Hmap.empty)) x y; mk_ite (Cons("<=", [efst x;efst y],Hmap.empty)) y x]
+  | _ -> failwith "using more than 2 cells is not implemented in sort"
+(*   Cons("Sort", List.map efst l, Hmap.empty) *)
+  
+let comp e1 e2 = Cons("<=", [efst e1; efst e2], Hmap.empty)
+  
+  
 let rec get_base_array a =
   match a with
   | Cons("store", [x;ind;v], _) -> 

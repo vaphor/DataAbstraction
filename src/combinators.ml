@@ -147,24 +147,45 @@ let set_to_n_map f n s  =
      (fun (i,stot) _ -> (i-1, set_product_map (mkf i) s stot)) 
      (n-1,s) 
      (mk_list (n - 1))) 
+     
+let list_product l1 l2 =
+  List.flatten (List.map (fun e1 -> List.map (fun e2 -> e1 @ [e2]) l2) l1)
+
+(*let list_to_n_distinct l n =
+  List.fold_left (fun res _ -> List.map (fun (sl, m) -> res *)
+  
+let power n l =
+  List.fold_left (fun res _ -> list_product res l) [[]] (mk_list n)
+  
+let rec combinations n l =
+    if n <= 0 then [[]]
+    else match l with
+         | [] -> []
+         | h :: tl ->
+            let with_h = List.map (fun l -> l @[h]) (combinations (n - 1) tl) in
+            let without_h = combinations n tl in
+            with_h @ without_h
   
 let duplicate abstraction n =
 (*   if n = 1 then abstraction else *)
+(*  let is_sorted a =
+    List.flatten (List.map (fun i -> List.map (fun j -> Cons("<", [(extract (efst a j); (extract a i)], Hmap.empty)) (mk_list i)) (mk_list n))*)
+(*   in *)
   let fsq q a b = 
       Cons("and", 
-          List.map (fun i -> 
-          (abstraction.fsigmaq (extract q i) (extract a i) b)) (mk_list n)
+          (List.map (fun i -> 
+          (abstraction.fsigmaq (extract q i) (extract a i) b)) (mk_list n))
         , Hmap.empty) in
   let fs a b = 
       Cons("and", 
-          List.map (fun i -> 
-          (abstraction.fsigma (extract a i) b)) (mk_list n)
+          (List.map (fun i -> 
+          (abstraction.fsigma (extract a i) b)) (mk_list n))
         , Hmap.empty) in
   let instset a ctx =
     let i = abstraction.insts a ctx in
-    let ilist= Insts_set.elements i in
-    let reslist = List.fold_left (fun res _ -> 
-                                     List.flatten (List.map (fun r -> List.map (fun x -> r @ [x]) ilist) res)) [[]] (mk_list n) in
+    let ilist= Insts_set.elements i in 
+    let reslist = power n ilist in                              
+                                     
     let restuples = List.map (fun l -> (mk_tuple (List.map fst l),mk_tuple (List.map snd l))) reslist in
     Insts_set.of_list restuples
     in      
@@ -176,6 +197,69 @@ let duplicate abstraction n =
     fsigma = fs;
     insts = instset;     
   }
+  
+  
+  
+  
+  
+ let duplicate_distinct abstraction (fsort, comp) n =
+(*   if n = 1 then abstraction else *)
+  let is_sorted a =
+    List.flatten (List.map (fun i -> List.map (fun j -> comp (extract a j) (extract a i)) (mk_list i)) (mk_list n))
+  in
+  let fsq q a b = 
+      Cons("and", 
+          (List.map (fun i -> 
+          (abstraction.fsigmaq (extract q i) (extract a i) b)) (mk_list n)) @ (is_sorted a)
+        , Hmap.empty) in
+  let fs a b = 
+      Cons("and", 
+          (List.map (fun i -> 
+          (abstraction.fsigma (extract a i) b)) (mk_list n)) @ (is_sorted a)
+        , Hmap.empty) in
+  let instset a ctx =
+    let i = abstraction.insts a ctx in
+    let ilist= Insts_set.elements i in
+    let reslist = if List.length ilist < n then power n ilist else combinations n ilist in                              
+                                     
+    let restuples = List.map (fun l -> ((fsort (List.map fst l)),mk_tuple (List.map snd l))) reslist in
+    Insts_set.of_list restuples
+    in      
+  {
+    name = Printf.sprintf "%sx%i" abstraction.name n;
+    concrete_type = abstraction.concrete_type;
+    abstract_type = mk_named_tuple (List.map (fun _ ->  (abstraction.abstract_type, Printf.sprintf "%s" abstraction.name)) (mk_list n));
+    fsigmaq = fsq;
+    fsigma = fs;
+    insts = instset;     
+  } 
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   
   
   let reorganize_tuples initialtype tree=

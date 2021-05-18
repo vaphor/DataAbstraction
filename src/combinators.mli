@@ -8,7 +8,7 @@ val mk_id : expr (*type*) -> abstraction
 val tuple_dot: abstraction list -> abstraction
 val compose : abstraction -> abstraction -> abstraction
 val duplicate : abstraction -> int -> abstraction
-
+val duplicate_distinct : abstraction -> ((expr list -> expr) * (expr -> expr -> expr)) -> int -> abstraction
 (*reorganizes tuples. This can do swap, duplication, forget, ...
 Example reorganize_tuples ((int, string), (bool, (string, int)) "(0.0, (1.0, 0.0), 1.1.0)"
 transforms P ((a,b), (c, (d,e))) into P_abs(a, (c, a), d) *)

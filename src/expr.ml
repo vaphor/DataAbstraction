@@ -103,6 +103,15 @@ let rec binders_from_cons e =
   | Cons(str, l, a) -> Cons(str, List.map binders_from_cons l, a)
   | Binder(op, name, vtype, fb, a) -> Binder(op, name, vtype, (fun x -> binders_from_cons (fb x)), a)
 
+  
+  
+let rec exists_expr f x =
+  if f x then true else
+  match (binders_as_cons x) with
+  | Cons(str, args, _) -> List.exists (exists_expr f) args
+  | Binder(b, vn, vt, fb, _) -> failwith "impossible"
+  
+  
 (* Verifies if two expressions are equivalent without caring about annotations and binder names *)
 let equiv e1 e2 =
   let (e1, e2) = (binders_from_cons e1, binders_from_cons e2) in
@@ -182,8 +191,14 @@ let rec simplify_bool expr =
    (
     let l' = List.map simplify_bool l in
     match (op, l') with
+    | ("<=", [a;b]) when equiv a b -> mk_true
     | ("ite", [Cons("true", [], _); a;b]) -> simplify_bool a
     | ("ite", [Cons("false", [], _); a;b]) -> simplify_bool b
+    | ("ite", [cond; a;b]) when exists_expr (fun x -> equiv x cond) a || exists_expr (fun x -> equiv x cond) b -> 
+        let a'= replace_all_opt (fun x -> if equiv x cond then Some(mk_true) else None) a in
+        let b'= replace_all_opt (fun x -> if equiv x cond then Some(mk_true) else None) b in
+        simplify_bool (mk_ite cond a' b')
+    | ("ite", [cond; a;b]) when equiv a b -> simplify_bool a
     | ("=>", [Cons("true", [], _); e]) -> simplify_bool e
     | ("=>", [e1; Cons("=>", [e2;e3], _)]) -> simplify_bool (Cons("=>", [Cons("and", [e1; e2], Hmap.empty);e3], Hmap.empty))
     | ("and", l') -> 
@@ -230,11 +245,36 @@ let rec simplify_arrays expr =
    )
   | Binder(bt, n, t, f, a) -> Binder(bt, n, t, (fun e -> simplify_arrays (f e)), a)
   
-let rec exists_expr f x =
-  if f x then true else
-  match (binders_as_cons x) with
-  | Cons(str, args, _) -> List.exists (exists_expr f) args
-  | Binder(b, vn, vt, fb, _) -> failwith "impossible"
+  
+  
+let rec remove_sort e =
+  match e with
+  | Cons("Sort", l, a) ->
+       let l' = 
+         match l with
+         | [x] -> [x]
+         | [x;y] -> [mk_ite (Cons("<", [x;y],Hmap.empty)) x y; mk_ite (Cons("<", [x;y],Hmap.empty)) y x]
+         | _ -> failwith "Sort removal for more than 2 items not implemented yet"
+       in
+       Cons("Tuple", l', a)
+  | Cons(str, l, a) -> Cons(str, List.map remove_sort l, a)
+  | Binder(bt, n, t, f, a) -> Binder(bt, n, t, (fun x -> remove_sort (f x)), a)
+  
+  
+let rec move_ite e =
+  match e with
+  | Cons(str, l, a) when (str = "select" || str = "extract" || str="<=") && List.exists (fun x -> match x with | Cons("ite", _, _) -> true | _ -> false) l ->
+     let ite = List.find (fun x -> match x with | Cons("ite", _, _) -> true | _ -> false) l in
+     let (cond, e1, e2, aite)= match ite with | Cons("ite", [cond;e1;e2], aite) -> (cond, e1,e2, aite) | _ -> failwith "impossible" in
+     move_ite (Cons("ite", [cond; 
+                            Cons(str, List.map (fun x -> if x = Cons("ite", [cond;e1;e2], aite) then e1 else x) l, a); 
+                            Cons(str, List.map (fun x -> if x = Cons("ite", [cond;e1;e2], aite) then e2 else x) l, a)
+                           ], aite))
+  | Cons(str, l, a) -> Cons(str, List.map move_ite l, a)
+  | Binder(bt, n, t, f, a) -> Binder(bt, n, t, (fun x -> move_ite (f x)), a)
+  
+  
+ 
   
     
   
@@ -298,6 +338,10 @@ let rec simplify_tuples e =
              List.nth lt (int_of_string n)
            with
            | _ -> failwith (Printf.sprintf "Call %i Extraction is impossible in %s" mtmp (print_expr (Cons(op, l, a))))
+         )
+      | ("extract", [Cons("ite", [cond;e1;e2], a); n]) -> 
+         (
+           simplify_tuples (Cons("ite", [cond;Cons("extract", [e1;n], Hmap.empty); Cons("extract", [e2;n], Hmap.empty)], a))
          )
       | ("Tuple", l) -> 
         (
@@ -387,10 +431,12 @@ let ackermanise e =
   in
   binders_from_cons (acker etmp)
   
+  
 
 let rec simplify ?acker:(acker=false) e = 
   let rec simplify_noacker e = 
-    let nopairs = simplify_tuples (split_tuple_binders e) in
+    let moveite = move_ite e in
+    let nopairs = simplify_tuples (split_tuple_binders moveite) in
     let qsimpl = remove_useless_binders nopairs in
     let arraysimp = simplify_arrays qsimpl in
     let simpeq = simplify_syntactic_eq (normalize_eq_ordering arraysimp) in

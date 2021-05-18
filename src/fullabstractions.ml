@@ -13,6 +13,8 @@ let rec mk_list n =
 
 type full_abs=string (*pname*) -> expr (*ptype*) -> (string (*abs panme*) * abstraction (*abstraction*))
 
+let abscelln t1 t2 n = duplicate_distinct (mk_cellabs t1 t2) (Cellabs.fsort, Cellabs.comp) n 
+let abscurcelln t1 t2 n = duplicate_distinct (mk_currified_cellabs t1 t2) (Cellabs.fsort, Cellabs.comp) n 
 
 (*Here we define our full abstraction!*)
 let all_arrays_cell n pname ptype =
@@ -21,12 +23,12 @@ let all_arrays_cell n pname ptype =
      | Cons("Tuple", l, a) -> 
          tuple_dot (List.map create_abs l)
      | Cons("Array", [t1;t2], a) -> 
-         duplicate (mk_cellabs t1 t2) n
+         abscelln t1 t2 n
      | _ -> mk_id ptype 
    in
    (pname^"_abs", create_abs ptype)
    
-let all_arrays_curr_cell n pname ptype =
+(*let all_arrays_curr_cell n pname ptype =
    let rec create_abs ptype =
     match ptype with
      | Cons("Tuple", l, a) -> 
@@ -42,19 +44,19 @@ let all_arrays_curr_cell n pname ptype =
      else
        final (compose cabscomp cabs)
    in
-   (pname^"_abs", final (create_abs ptype))
+   (pname^"_abs", final (create_abs ptype))*)
    
    
-(*let all_arrays_curr_cell n pname ptype =
+let all_arrays_curr_cell n pname ptype =
    let rec create_abs ptype =
     match ptype with
      | Cons("Tuple", l, a) -> 
          tuple_dot (List.map create_abs l)
      | Cons("Array", [t1;t2], a) -> 
-         duplicate (mk_currified_cellabs t1 t2) n
+         abscurcelln t1 t2 n
      | _ -> mk_id ptype 
    in
-   (pname^"_abs", create_abs ptype)*)
+   (pname^"_abs", create_abs ptype)
   
 (*indtype (recpectively valtype) is the index (respectively value) type of the array to abstract*)
 let array_smashing indtype valtype =  compose (reorganize_tuples (mk_tuple [indtype;valtype]) (mk_const "1")) (mk_cellabs indtype valtype)
