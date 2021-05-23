@@ -23,10 +23,10 @@ let rec get_base_array a =
       (basea, depth+1, [])
   | _ -> (a, 0, [])
 
-let only_base a = match (get_base_array a) with | (ba, da,l) -> ba
+let only_base a = match (get_base_array a) with | (ba, da,l) -> (ba, da)
   
 let rec relevant passed a ctx =
-  if List.exists (fun x -> equiv x a) passed then [] else
+  if List.exists (fun x -> (only_base x) = (only_base a)) passed then [] else
   let rec read avar depth expr =
       match expr with 
       | Cons("select", [b;i], _) ->
@@ -37,14 +37,22 @@ let rec relevant passed a ctx =
          else 
            recreads
       | a when equiv a avar -> [top]
-      | Cons("=", [x;y], _) when equiv (only_base x) avar -> List.flatten (List.map (read avar depth) [x;y]) @ (relevant (a::passed) y ctx)
-      | Cons("=", [x;y], _) when equiv (only_base y) avar -> List.flatten (List.map (read avar depth) [x;y]) @ (relevant (a::passed) x ctx)
+      | Cons("=", [x;y], _) when (only_base x)=(avar,depth) -> List.flatten (List.map (read avar depth) [x;y]) @ (relevant (a::passed) y ctx)
+      | Cons("=", [x;y], _) when (only_base y)=(avar,depth) -> List.flatten (List.map (read avar depth) [x;y]) @ (relevant (a::passed) x ctx)
       | Cons(str, args, _) -> List.flatten (List.map (read avar depth) args)
       | Binder(_, _, _, f, _) -> List.map (fun x -> if exists_expr (fun x -> equiv x top) x then top else x) (read avar depth (f top))      
   in
   let (basea, depth, l) = get_base_array a in
   match basea with
-  | Cons(str, [], _) -> (read basea depth ctx) @ (List.map fst l)
+  | Cons(str, [], _) -> let r =(read basea depth ctx) @ (List.map fst l) in
+       (* Printf.eprintf "relevant with passed=%s, a=%s returns %s with ctx = \n%s\n\n" 
+          (String.concat "," (List.map print_expr passed)) 
+          (print_expr a) 
+          (String.concat ","  (List.map print_expr r)) 
+          (print_expr ctx);*)
+        r
+  
+  
   | _ -> [top]
   
 let mk_cellabs t1 t2=
