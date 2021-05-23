@@ -13,6 +13,22 @@ let rec mk_list n =
 
 type full_abs=string (*pname*) -> expr (*ptype*) -> (string (*abs panme*) * abstraction (*abstraction*))
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 let abscelln t1 t2 n = duplicate_distinct (mk_cellabs t1 t2) (Cellabs.fsort, Cellabs.comp) n 
 let abscurcelln t1 t2 n = duplicate_distinct (mk_currified_cellabs t1 t2) (Cellabs.fsort, Cellabs.comp) n 
 
@@ -81,6 +97,9 @@ module ExprMap = Map.Make(struct type t = expr let compare = Pervasives.compare 
 let add_elem t e m =
   let prev_val = if ExprMap.mem t m then ExprMap.find t m else [] in
   ExprMap.add t (e::prev_val) m
+  
+let map_list_union m1 m2 =
+  ExprMap.merge (fun k l1 l2 -> match l1, l2 with | None,None -> None | Some(l1), Some(l2) -> Some(l1@l2) | None, Some(l2) -> Some(l2) | Some(l1), None -> Some(l1)) m1 m2
    
 let array_cell_same_index n pname ptype =
   let non_array_positions= ref [] in
@@ -144,3 +163,38 @@ let array_cell_same_index n pname ptype =
    | _ -> all_arrays_cell n pname ptype*)
    
     (*We return the name for the abstracted predicate and the abstraction*)
+
+    
+let array_cell_same_index2 n pname ptype =
+  let rec get_positions ptype pos=
+    match ptype with
+     | Cons("Tuple", l, a) ->
+         let children = List.mapi (fun i c -> get_positions c (i::pos)) l in
+         (List.fold_left (fun res (arr, na) -> map_list_union res arr) ExprMap.empty children, List.fold_left (fun res (arr, na) -> res @ na) [] children)
+         
+     | Cons("Array", [t1;t2], a) -> 
+         (ExprMap.singleton t1 [pos], [])
+     | _ -> 
+       (ExprMap.empty, [pos])
+   in
+   let (array_positions_for_type, non_array_positions)  = get_positions ptype [] in
+   let as_const pos = mk_const (String.concat "_" (List.map string_of_int (List.rev pos))) in
+   
+   let group_arrays= ExprMap.map (fun poslist -> mk_tuple (List.map as_const poslist)) array_positions_for_type in
+   let final =mk_tuple ((mk_tuple (List.map as_const non_array_positions))::(List.map snd (ExprMap.bindings group_arrays))) in
+   
+   let reorganizeabs=reorganize_tuples ptype final in
+   let rec create_abs ptype =
+    match ptype with
+     | Cons("Tuple", l, a) -> 
+         tuple_dot (List.map create_abs l)
+     | _ -> mk_id ptype 
+   in
+   
+   let arrayabs=
+     tuple_dot ((create_abs (simplify (extract reorganizeabs.abstract_type 0)))::(List.mapi (fun i _ -> (duplicate (mk_combined_abs (simplify (extract reorganizeabs.abstract_type (i+1)))) n)) (ExprMap.bindings group_arrays))) in
+     
+   Printf.eprintf "Final abs type is : %s\n" (print_expr (simplify arrayabs.abstract_type));
+   
+   (pname^"_abs", compose arrayabs reorganizeabs)
+   

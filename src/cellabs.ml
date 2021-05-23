@@ -23,7 +23,9 @@ let rec get_base_array a =
       (basea, depth+1, [])
   | _ -> (a, 0, [])
 
-let relevant a ctx =
+  
+let rec relevant passed a ctx =
+  if List.exists (fun x -> equiv x a) passed then [] else
   let rec read avar depth expr =
       match expr with 
       | Cons("select", [b;i], _) ->
@@ -34,6 +36,8 @@ let relevant a ctx =
          else 
            recreads
       | a when equiv a avar -> [top]
+      | Cons("=", [x;y], _) when equiv x a -> relevant (a::passed) y ctx
+      | Cons("=", [x;y], _) when equiv y a -> relevant (a::passed) x ctx
       | Cons(str, args, _) -> List.flatten (List.map (read avar depth) args)
       | Binder(_, _, _, f, _) -> List.map (fun x -> if exists_expr (fun x -> equiv x top) x then top else x) (read avar depth (f top))      
   in
@@ -50,7 +54,7 @@ let mk_cellabs t1 t2=
          fsigma= (fun iv a -> Cons("=", [esnd iv; (Cons("select", [a; efst iv], Hmap.empty))], Hmap.empty));
          fsigmaq  = (fun q iv a ->  Cons("=", [esnd iv; (Cons("select", [a; efst iv], Hmap.empty))], Hmap.empty));
          insts = (fun a ctx ->
-            let r = relevant (simplify a) (simplify ctx) in
+            let r = relevant [] (simplify a) (simplify ctx) in
             if List.exists (fun x -> equiv x top) r && not (exists_expr (fun x -> equiv x (mk_const "_")) ctx) then Printf.eprintf "Got top in relevant set. Extracted from relevant %s in ctx\n%s\n\n" (print_expr (simplify a)) (print_expr (simplify ctx));
             let rtop = List.filter (fun x -> not (equiv x top)) r in
             let ind = if rtop =[] then [mk_const "17"] else rtop in
@@ -79,3 +83,30 @@ let mk_currified_cellabs t1 t2=
          | None -> failwith "Impossible"
          | Some(mabs) -> mabs
       
+let mk_combined_abs t=
+  let (indtype, vallist) = 
+    match t with
+    | Cons("Tuple", a::q, _) ->
+        let get_types a = match a with | Cons("Array", [t1;t2], _) -> (t1,[t2]) | _ -> failwith "Not an array" in
+        List.fold_left (fun (i, vl) a -> let (i', v) = get_types a in if equiv i i' then (i, vl @ v) else failwith "not same index types...") (get_types a) q
+    | _ -> failwith "Expected a tuple"
+  in
+  
+  {
+    name = Printf.sprintf "combinearrays";
+    concrete_type = t;
+    abstract_type = mk_named_pair (indtype, "i") (mk_tuple vallist, "v");
+    fsigmaq = (fun q iv a -> mk_and (List.mapi (fun i _ ->  Cons("=", [(extract (esnd iv) i); (Cons("select", [extract a i; efst iv], Hmap.empty))], Hmap.empty)) vallist));
+    fsigma = (fun iv a -> mk_and (List.mapi (fun i _ ->  Cons("=", [(extract (esnd iv) i); (Cons("select", [extract a i; efst iv], Hmap.empty))], Hmap.empty)) vallist));
+    insts = (fun a ctx -> 
+            let r = fst (List.fold_left (fun (rtot,i) _ -> (rtot @ (relevant [] (simplify (extract a i)) (simplify ctx)), i+1)) ([], 0) vallist) in
+            if List.exists (fun x -> equiv x top) r && not (exists_expr (fun x -> equiv x (mk_const "_")) ctx) then Printf.eprintf "Got top in relevant set. Extracted from relevant extract(%s, _) in ctx\n%s\n\n" (print_expr (simplify a)) (print_expr (simplify ctx));
+            let rtop = List.filter (fun x -> not (equiv x top)) r in
+            let ind = if rtop =[] then [mk_const "17"] else rtop in
+            let iset = List.map (fun r -> 
+              let aabs = mk_pair r (mk_tuple (List.mapi (fun i _ -> mk_select (extract a i) r) vallist)) in
+              let q = mk_unit in
+              (aabs, q)
+            ) ind in
+           Insts_set.of_list iset);
+  }
