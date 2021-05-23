@@ -37,8 +37,8 @@ let rec relevant passed a ctx =
          else 
            recreads
       | a when equiv a avar -> [top]
-      | Cons("=", [x;y], _) when equiv (only_base x) avar -> List.flatten (List.map (read avar depth) [x;y]) @ (relevant (a::passed) x ctx)
-      | Cons("=", [x;y], _) when equiv (only_base y) avar -> List.flatten (List.map (read avar depth) [x;y]) @ (relevant (a::passed) y ctx)
+      | Cons("=", [x;y], _) when equiv (only_base x) avar -> List.flatten (List.map (read avar depth) [x;y]) @ (relevant (a::passed) y ctx)
+      | Cons("=", [x;y], _) when equiv (only_base y) avar -> List.flatten (List.map (read avar depth) [x;y]) @ (relevant (a::passed) x ctx)
       | Cons(str, args, _) -> List.flatten (List.map (read avar depth) args)
       | Binder(_, _, _, f, _) -> List.map (fun x -> if exists_expr (fun x -> equiv x top) x then top else x) (read avar depth (f top))      
   in
