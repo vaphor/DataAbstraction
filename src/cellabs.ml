@@ -23,6 +23,7 @@ let rec get_base_array a =
       (basea, depth+1, [])
   | _ -> (a, 0, [])
 
+let only_base a = match (get_base_array a) with | (ba, da,l) -> ba
   
 let rec relevant passed a ctx =
   if List.exists (fun x -> equiv x a) passed then [] else
@@ -36,8 +37,8 @@ let rec relevant passed a ctx =
          else 
            recreads
       | a when equiv a avar -> [top]
-      | Cons("=", [x;y], _) when equiv x a -> relevant (a::passed) y ctx
-      | Cons("=", [x;y], _) when equiv y a -> relevant (a::passed) x ctx
+      | Cons("=", [x;y], _) when equiv (only_base x) avar -> relevant (a::passed) x ctx
+      | Cons("=", [x;y], _) when equiv (only_base y) avar -> relevant (a::passed) y ctx
       | Cons(str, args, _) -> List.flatten (List.map (read avar depth) args)
       | Binder(_, _, _, f, _) -> List.map (fun x -> if exists_expr (fun x -> equiv x top) x then top else x) (read avar depth (f top))      
   in
