@@ -263,7 +263,7 @@ let duplicate abstraction n =
   
   
   let reorganize_tuples initialtype tree=
-    Printf.printf "Reorganizing tuples typed with %s by %s" (print_expr initialtype) (print_expr tree);
+(*     Printf.eprintf "Reorganizing tuples typed with %s by %s" (print_expr initialtype) (print_expr tree); *)
 (*     let tree = parse_expr str in *)
 (*     Printf.printf "Parsed is %s" (print_expr tree); *)
     let rec get_val str t=
@@ -303,7 +303,7 @@ let duplicate abstraction n =
       |  Cons(str, [], _) -> get_val str a
       | _ -> failwith (Printf.sprintf "Unknown value %s for reorganizing tuples" (print_expr tree))
     in     
-    Printf.printf "\n\nabstype is %s\n\n" (print_expr (simplify (compute_abs_type tree)));
+(*     Printf.eprintf "\n\nabstype is %s\n\n" (print_expr (simplify (compute_abs_type tree))); *)
     {
     name = Printf.sprintf "tuple_reorganisation";
     concrete_type = initialtype;

@@ -194,7 +194,7 @@ let array_cell_same_index2 n pname ptype =
    let arrayabs=
      tuple_dot ((create_abs (simplify (extract reorganizeabs.abstract_type 0)))::(List.mapi (fun i _ -> (duplicate (mk_combined_abs (simplify (extract reorganizeabs.abstract_type (i+1)))) n)) (ExprMap.bindings group_arrays))) in
      
-   Printf.eprintf "Final abs type is : %s\n" (print_expr (simplify arrayabs.abstract_type));
+(*    Printf.eprintf "Final abs type is : %s\n" (print_expr (simplify arrayabs.abstract_type)); *)
    
    (pname^"_abs", compose arrayabs reorganizeabs)
    
