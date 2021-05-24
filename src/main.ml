@@ -14,6 +14,7 @@ let get_full_abs_from_name str =
   | celln when (String.sub str 0 4) = "Cell" -> all_arrays_cell (int_of_string (String.sub str 4 ((String.length str) - 4))) 
   | curccelln when (String.sub str 0 7) = "CurCell" -> all_arrays_curr_cell (int_of_string (String.sub str 7 ((String.length str) - 7))) 
   | samecelln when (String.sub str 0 8) = "SameCell" -> array_cell_same_index2 (int_of_string (String.sub str 8 ((String.length str) - 8))) 
+  | samecelln when (String.sub str 0 11) = "revSameCell" -> array_cell_same_index2rev (int_of_string (String.sub str 11 ((String.length str) - 11))) 
   | "Smashing" -> smash_all
   | _ -> failwith (Printf.sprintf "Unknown abstraction %s" str)
 
