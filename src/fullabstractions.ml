@@ -165,6 +165,8 @@ let array_cell_same_index n pname ptype =
     (*We return the name for the abstracted predicate and the abstraction*)
 
     
+let combinedabs_distinct t n=duplicate_distinct (mk_combined_abs t) (Cellabs.fsort, Cellabs.comp) n 
+    
 let array_cell_same_index2 n pname ptype =
   let rec get_positions ptype pos=
     match ptype with
@@ -192,9 +194,8 @@ let array_cell_same_index2 n pname ptype =
    in
    
    let arrayabs=
-     tuple_dot ((create_abs (simplify (extract reorganizeabs.abstract_type 0)))::(List.mapi (fun i _ -> (duplicate (mk_combined_abs (simplify (extract reorganizeabs.abstract_type (i+1)))) n)) (ExprMap.bindings group_arrays))) in
+     tuple_dot ((create_abs (simplify (extract reorganizeabs.abstract_type 0)))::(List.mapi (fun i _ -> combinedabs_distinct (simplify (extract reorganizeabs.abstract_type (i+1))) n) (ExprMap.bindings group_arrays))) in
      
-(*    Printf.eprintf "Final abs type is : %s\n" (print_expr (simplify arrayabs.abstract_type)); *)
    
    (pname^"_abs", compose arrayabs reorganizeabs)
    
@@ -226,9 +227,7 @@ let array_cell_same_index2rev n pname ptype =
    in
    
    let arrayabs=
-     tuple_dot ((List.mapi (fun i _ -> (duplicate (mk_combined_abs (simplify (extract reorganizeabs.abstract_type (i)))) n)) (ExprMap.bindings group_arrays))@[(create_abs (simplify (extract reorganizeabs.abstract_type (List.length (ExprMap.bindings group_arrays)))))]) in
-     
-(*    Printf.eprintf "Final abs type is : %s\n" (print_expr (simplify arrayabs.abstract_type)); *)
+     tuple_dot ((List.mapi (fun i _ -> combinedabs_distinct (simplify (extract reorganizeabs.abstract_type (i))) n) (ExprMap.bindings group_arrays))@[(create_abs (simplify (extract reorganizeabs.abstract_type (List.length (ExprMap.bindings group_arrays)))))]) in
    
    (pname^"_abs", compose arrayabs reorganizeabs)
    
