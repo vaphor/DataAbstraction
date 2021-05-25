@@ -26,6 +26,7 @@ type config_t = {
   acker:bool;
   abstract_only:bool;
   simplify:bool;
+  only_list:bool;
 }
 exception Version
 exception Usage of string
@@ -37,6 +38,7 @@ let set_debug config () = config := {!config with debug=true}
 let set_acker config () = config := {!config with acker=true}
 let set_abs_only config () = config := {!config with abstract_only=true}
 let set_no_simplify config () = config := {!config with simplify=false}
+let list_abs config () = config := {!config with only_list=true}
 
 let set_fname config (s:string) =  
   if Sys.file_exists s
@@ -55,6 +57,7 @@ let make_default_config () = {
   acker=false;
   abstract_only=false;
   simplify=true;
+  only_list=false;
 }
 			       
 (*let string_config cf =
@@ -69,11 +72,12 @@ let read_args () =
       ("-acker",Arg.Unit (set_acker cf) ,": ackermanise arrays when possible");
       ("-debug", Arg.Unit (set_debug cf) ,": all debug info");
       ("-abstraction", Arg.String (set_abs cf) ,": Abstraction to use. Can be Cell1, Cell2, ... Smashing");
+      ("-abslist", Arg.Unit (list_abs cf) ,": List of current implemented abstractions. Parameters should be written directly after the name. Example : -abstraction Cell1");
       ("-o", Arg.String (set_outputsmt cf) ,": outputfile, default is res.smt2");
     ] in
   let usage_msg = "Usage : ./vaphor [options] file.smt2" in
   try (Arg.parse speclist (set_fname cf) usage_msg; 
-       if !cf.f_name = "" then begin Arg.usage speclist usage_msg ; raise (Usage usage_msg) end; 
+       if !cf.f_name = "" && not (!cf.only_list) then begin Arg.usage speclist usage_msg ; raise (Usage usage_msg) end; 
        !cf 
   )
   with

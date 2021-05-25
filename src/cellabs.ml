@@ -64,7 +64,7 @@ let mk_cellabs t1 t2=
          fsigmaq  = (fun q iv a ->  Cons("=", [esnd iv; (Cons("select", [a; efst iv], Hmap.empty))], Hmap.empty));
          insts = (fun a ctx ->
             let r = relevant [] (simplify a) (simplify ctx) in
-            if List.exists (fun x -> equiv x top) r && not (exists_expr (fun x -> equiv x (mk_const "_")) ctx) then Printf.eprintf "Got top in relevant set. Extracted from relevant %s in ctx\n%s\n\n" (print_expr (simplify a)) (print_expr (simplify ctx));
+(*             if List.exists (fun x -> equiv x top) r && not (exists_expr (fun x -> equiv x (mk_const "_")) ctx) then Printf.eprintf "Got top in relevant set. Extracted from relevant %s in ctx\n%s\n\n" (print_expr (simplify a)) (print_expr (simplify ctx)); *)
             let rtop = List.filter (fun x -> not (equiv x top)) r in
             let ind = if rtop =[] then [mk_const "17"] else rtop in
             let iset = List.map (fun r -> 
@@ -109,7 +109,7 @@ let mk_combined_abs t=
     fsigma = (fun iv a -> mk_and (List.mapi (fun i _ ->  Cons("=", [(extract (esnd iv) i); (Cons("select", [extract a i; efst iv], Hmap.empty))], Hmap.empty)) vallist));
     insts = (fun a ctx -> 
             let r = fst (List.fold_left (fun (rtot,i) _ -> (rtot @ (relevant [] (simplify (extract a i)) (simplify ctx)), i+1)) ([], 0) vallist) in
-            if List.exists (fun x -> equiv x top) r && not (exists_expr (fun x -> equiv x (mk_const "_")) ctx) then Printf.eprintf "Got top in relevant set. Extracted from relevant extract(%s, _) in ctx\n%s\n\n" (print_expr (simplify a)) (print_expr (simplify ctx));
+(*             if List.exists (fun x -> equiv x top) r && not (exists_expr (fun x -> equiv x (mk_const "_")) ctx) then Printf.eprintf "Got top in relevant set. Extracted from relevant extract(%s, _) in ctx\n%s\n\n" (print_expr (simplify a)) (print_expr (simplify ctx)); *)
             let rtop = List.filter (fun x -> not (equiv x top)) r in
             let ind = if rtop =[] then [mk_const "17"] else rtop in
             let iset = List.map (fun r -> 
