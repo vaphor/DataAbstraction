@@ -40,10 +40,17 @@ let parse_expr str=
   parse_expr_buf lexbuf
   
 let import_expr filename=  
-  let f_desc = try open_in filename
-  with 
-    | Sys_error(e) -> failwith ("Impossible to open file. Filename read is \""^filename^"\"") in
-  let lexbuf = Lexing.from_channel f_desc in
+  let lexbuf = 
+    if String.compare filename "stdin" = 0 then
+       Lexing.from_channel stdin
+    else
+    (
+      let f_desc = 
+        try open_in filename
+        with | Sys_error(e) -> failwith ("Impossible to open file. Filename read is \""^filename^"\"") 
+      in Lexing.from_channel f_desc
+    )
+  in
   parse_expr_buf lexbuf
   
   
@@ -52,10 +59,17 @@ let parse_horn str=
   parse_horn_buf lexbuf
   
 let import_horn filename=  
-  let f_desc = try open_in filename
-  with 
-    | Sys_error(e) -> failwith ("Impossible to open file. Filename read is \""^filename^"\"") in
-  let lexbuf = Lexing.from_channel f_desc in
+  let lexbuf = 
+    if String.compare filename "stdin" = 0 then
+       Lexing.from_channel stdin
+    else
+    (
+      let f_desc = 
+        try open_in filename
+        with | Sys_error(e) -> failwith ("Impossible to open file. Filename read is \""^filename^"\"") 
+      in Lexing.from_channel f_desc
+    )
+  in
   parse_horn_buf lexbuf
   
     

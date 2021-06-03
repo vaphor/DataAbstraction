@@ -49,7 +49,7 @@ let set_abs config str =
   config := {!config with abstraction=str}
 					   
 let make_default_config () = {
-  f_name="";
+  f_name="stdin";
   outputsmt_name="stdout";
   abstraction = "Cell1";
   debug=false;
